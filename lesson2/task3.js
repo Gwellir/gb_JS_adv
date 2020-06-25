@@ -6,6 +6,9 @@ class Hamburger {
         this.toppings = this.getToppings();
         this.calories = this.calculateCalories();
         this.cost = this.calculatePrice();
+        this.totalCostElem = document.getElementById('cost');
+        this.totalCaloriesElem = document.getElementById('calories');
+        this.fillTotals();
     }
 
     getToppings() {
@@ -58,8 +61,16 @@ class Hamburger {
             return sum + item.calories
         }, 0)
     }
+
+    fillTotals() {
+        this.totalCaloriesElem.textContent = this.calories;
+        this.totalCostElem.textContent = this.cost;
+    }
 }
 
-ham = new Hamburger();
-document.getElementById('cost').textContent = ham.cost;
-document.getElementById('calories').textContent = ham.calories;
+let ham = new Hamburger();
+
+document.getElementById('calc').addEventListener('click', () => {
+    console.log('Recalculating...');
+    ham = new Hamburger();
+});
