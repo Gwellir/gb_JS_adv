@@ -18,14 +18,10 @@ class ProductList {
     }
 
     get totalCost() {
-        let total = this.goods.reduce(function(sum, item) {
-            let price = 0;
-            if (item.hasOwnProperty('price') && !Number.isNaN(item.price)) {
-                price = item.price;
-            }
-            return sum + price;
+        return this.goods.reduce(function(sum, item) {
+            return item.hasOwnProperty('price') && !Number.isNaN(item.price)
+                ? sum + item.price : sum;
         }, 0);
-        return total;
     }
 
     render() {
