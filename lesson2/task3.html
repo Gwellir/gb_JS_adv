@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hamburger</title>
+</head>
+<body>
+    <h3>Вычисление гамбургера</h3>
+    <form id="hamburger-form">
+        <div class='hamburger-size'>
+            <input type="radio" id="sizeSmall" name="size" value="small" data-price="50" data-calories="20" checked>
+            <label for="sizeSmall">Маленький</label>
+            <input type="radio" id="sizeLarge" name="size" value="large" data-price="100" data-calories="40">
+            <label for="sizeLarge">Большой</label>
+        </div>
+        <div class="hamburger-stuffing">
+            <input type="radio" id="stuffingCheese" name="stuffing" value="cheese" data-price="10" data-calories="20" checked>
+            <label for="stuffingCheese">С сыром</label>
+            <input type="radio" id="stuffingSalad" name="stuffing" value="salad" data-price="20" data-calories="5">
+            <label for="stuffingSalad">С салатом</label>
+            <input type="radio" id="stuffingPotato" name="stuffing" value="potato" data-price="15" data-calories="10">
+            <label for="stuffingPotato">С картошкой</label>
+        </div>
+        <div class="hamburger-topping">
+            <input type="checkbox" id="toppingSpecies" name="topping" value="species" data-price="15" data-calories="0" checked>
+            <label for="toppingSpecies">Со специями</label>
+            <input type="checkbox" id="toppingMayonaise" name="topping" value="mayonaise" data-price="20" data-calories="5">
+            <label for="toppingMayonaise">С майонезом</label>
+        </div>
+    </form>
+    <button id="calc">Посчитать</button>
+    <div class="cost">Цена: <span id="cost"></span> р.</div>
+    <div class="calories">Калорийность: <span id="calories"></span> Ккал</div>
+
+    <script src="task3.js"></script>
+</body>
+</html>
