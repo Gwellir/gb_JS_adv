@@ -12,22 +12,6 @@ const tableTemplate = `<h3>Корзина</h3>
     </table>`
 
 
-// Rework with promises
-// let getRequest = (url, cb) => {
-//     let xhr = new XMLHttpRequest();
-//     xhr.open('GET', url, true);
-//     xhr.onreadystatechange = () => {
-//         if (xhr.readyState === 4) {
-//             if (xhr.status !== 200) {
-//                 console.log('Error');
-//             } else {
-//                 cb(xhr.responseText);
-//             }
-//         }
-//     };
-//     xhr.send();
-// }
-
 let getRequestPromise = (url) => {
     return new Promise((res, rej) => {
         let xhr = new XMLHttpRequest();
@@ -46,24 +30,21 @@ let getRequestPromise = (url) => {
 }
 
 class ProductList {
-    constructor(container = '.products') {
+    constructor(basket, container = '.products') {
         this.container = container;
         this.goods = [];
         this.allProducts = [];
+        this.basket = basket;
         this._getProducts()
             .then(data => {
                 this.goods = [...data];
                 this.render();
                 this.buyButtonElems = document.querySelectorAll('.buy-btn');
+                this._applyProductsListeners();
             });
     }
 
     _getProducts() {
-        // return fetch(`${API}/catalogData.json`)
-        //     .then(response => response.json())
-        //     .catch(error => {
-        //         console.log(error);
-        //     });
         return getRequestPromise(`${API}/catalogData.json`)
             .then(response => JSON.parse(response))
             .catch(error => {
@@ -72,14 +53,21 @@ class ProductList {
     }
 
     get totalCost() {
-        let total = this.goods.reduce(function(sum, item) {
-            let price = 0;
+        return this.goods.reduce(function(sum, item) {
             if (item.hasOwnProperty('price') && !Number.isNaN(item.price)) {
-                price = item.price;
+                sum += item.price;
             }
-            return sum + price;
+            return sum;
         }, 0);
-        return total;
+    }
+
+    _applyProductsListeners() {
+        console.log(this.buyButtonElems);
+        for (let buyButton of this.buyButtonElems) {
+            buyButton.addEventListener('click', () => {
+                this.basket.addItem(buyButton.parentNode);
+            });
+        }
     }
 
     render() {
@@ -102,7 +90,7 @@ class ProductItem {
     }
 
     render() {
-        return `<div class="product-item" data-id="${this.id}">
+        return `<div class="product-item" data-id="${this.id}" data-title="${this.title}" data-price="${this.price}">
                     <img src="${this.img}" alt="product image">
                     <h3>${this.title}</h3>
                     <p>Цена: ${this.price} \u20bd</p>
@@ -124,28 +112,25 @@ class Basket {
         this._fetchBasket()
             .then(data => {
                 this._updateBasketView(data);
-                this.removeButtonElems = document.querySelectorAll('.remove-btn');
-                this._applyBasketListeners();
             });
     }
 
-    _getBasketProductById(id) {
-        return this.basketList.filter( (item) => item.id_product === id)[0];
-    }
+    // _getBasketProductById(id) {
+    //     return this.basketList.find( (item) => {
+    //         if (item.id_product === id) {
+    //             return item;
+    //         }
+    //     });
+    // }
 
     _applyBasketListeners() {
         console.log(this.removeButtonElems);
         // console.log(this.buyButtonElems);
         for (let rmButton of this.removeButtonElems) {
-            rmButton.addEventListener('click', () => {
-                this.removeItem(this._getBasketProductById(+rmButton.dataset.productId));
+            rmButton.addEventListener('click', (event) => {
+                this.removeItem(event.target);
             });
         }
-        // for (let buyButton of this.buyButtonElems) {
-        //     buyButton.addEventListener('click', () => {
-        //         this.addItem(this._getBasketProductById(+buyButton.parent.dataset.id));
-        //     });
-        // }
     }
     
     _clearBasketView() {
@@ -178,22 +163,38 @@ class Basket {
         this.basketElem.classList.toggle('hidden-element')
     }
 
-    _modifyBasket(product, action) {
-        // Выполнение серверных изменений корзины
-        console.log(`Trying to perform basket '${action}' on ${product.product_name} (${product.id_product})`);
-        let apiAction = (action === 'delete' ? 'deleteFromBasket' : 'addToBasket');
-        fetch(`${API}/${apiAction}.json`)
+    _modifyBasket(product) {
+        // Выполнение изменений отображения корзины
+        let row = document.querySelector(`.basket-row[data-basket-id="${product.id_product}"]`);
+        row.querySelector('.product-quantity').textContent = `${product.quantity}`;
+        this.basketElem.querySelector('#total-amount-field').textContent = `${this.total}`;
+    }
+
+    addItem(elem) {
+        // добавление единицы продукта в корзину
+        fetch(`${API}/addToBasket.json`)
             .then(response => response.json())
             .then(data => {
                 if (data['result'] !== 1) {
                     throw `Error while performing '${action}' on ${product.product_name} (${product.id_product}): ${data['result']}`;
                 } else {
-                    this._fetchBasket()
-                        .then(data => {
-                            this._updateBasketView(data);
-                            this.removeButtonElems = document.querySelectorAll('.remove-btn');
-                            this._applyBasketListeners();
-                        });
+                    let productId = +elem.dataset['id'];
+                    let found = this.basketList.find(product => product.id_product === productId);
+                    this.total += +elem.dataset['price'];
+                    if (found) {
+                        found.quantity++;
+                        this._modifyBasket(found);
+                    } else {
+                        let product = {
+                            id_product: productId,
+                            price: +elem.dataset['price'],
+                            product_name: elem.dataset['title'],
+                            quantity: 1,
+                        };
+                        this.positionCount += 1;
+                        this.basketList.push(product);
+                        this.render();
+                    }
                 }
             })
             .catch(error => {
@@ -201,20 +202,37 @@ class Basket {
             });
     }
 
-    addItem(product) {
-        // добавление единицы продукта в корзину
-        this._modifyBasket(product, 'add');
-    }
-
-    removeItem(product) {
-        // удаление продукта из корзины
-        this._modifyBasket(product, 'delete');
+    removeItem(elem) {
+        // удаление товара
+        fetch(`${API}/deleteFromBasket.json`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.result === 1) {
+                    let productId = +elem.dataset['productId'];
+                    let found = this.basketList.find(product => product.id_product === productId);
+                    this.total -= found.price;
+                    if (found.quantity > 1) { 
+                        found.quantity--;
+                        this._modifyBasket(found);
+                    } else {
+                        this.positionCount -= 1;
+                        this.basketList.splice(this.basketList.indexOf(found), 1);
+                        this.render();
+                        // document.querySelector(`.basket-row[data-basket-id="${productId}"]`).remove();
+                    }
+                } else {
+                    alert('Error');
+                }
+            })
+            .catch(error => {
+                console.log(error);
+            });
     }
 
     render() {
         // Организация отображения набора из BasketItem 
         this._clearBasketView();
-        if (!this.basketList) {
+        if (!this.basketList.length) {
             this.basketElem.insertAdjacentHTML('beforeend', basketIsEmpty)
         } else {
             this.basketElem.insertAdjacentHTML('beforeend',
@@ -227,6 +245,8 @@ class Basket {
                 tableElem.insertAdjacentHTML('beforeend', basketObject.render())
             }
         }
+        this.removeButtonElems = document.querySelectorAll('.remove-btn');
+        this._applyBasketListeners();
     }
 }
 
@@ -242,13 +262,13 @@ class BasketItem {
     render() {
         // Отображение индивидуальных BasketItem
         return `<tr class="basket-row" data-basket-id="${this.id}">
-                    <td>${this.title}</td>
-                    <td>${this.price} \u20bd</td>
-                    <td>${this.quantity}</td>
+                    <td class="product-title">${this.title}</td>
+                    <td class="product-price">${this.price} \u20bd</td>
+                    <td class="product-quantity">${this.quantity}</td>
                     <td><button class="remove-btn" data-product-id="${this.id}">удалить</button></td>
                 </tr>`;
     }
 }
 
-let plist = new ProductList();
 let basket = new Basket();
+let plist = new ProductList(basket);
