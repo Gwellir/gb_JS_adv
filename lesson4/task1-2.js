@@ -1,11 +1,11 @@
-const text = document.querySelector('.text').textContent
-const elemToFill = document.querySelector('.edited-text')
-const elemToFill2 = document.querySelector('.edited-text-2')
+const text = document.querySelector('.text').textContent;
+const elemToFill = document.querySelector('.task-1');
+const elemToFill2 = document.querySelector('.task-2');
 
-const re = /(\A|\s|)(\w+: )'(.*?)'(\s)/g
-elemToFill.insertAdjacentHTML('beforebegin', `<p>using: ${re}</p>`)
-elemToFill.textContent = text.replace(re, '$2"$3"$4')
+const re1 = /'/g;
+elemToFill.insertAdjacentHTML('beforebegin', `<p>task1 using: ${re1}</p>`);
+elemToFill.textContent = text.replace(re1, '"');
 
-const re2 = /\B'|'\B/g
-elemToFill2.insertAdjacentHTML('beforebegin', `<p>using: ${re2}</p>`)
-elemToFill2.textContent = text.replace(re2, '"')
+const re2 = /\B'|'\B/g;
+elemToFill2.insertAdjacentHTML('beforebegin', `<p>task2 using: ${re2}</p>`);
+elemToFill2.textContent = text.replace(re2, '"');
