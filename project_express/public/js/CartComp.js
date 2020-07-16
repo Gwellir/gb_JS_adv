@@ -41,17 +41,6 @@ Vue.component('cart', {
                 });
             }
         },
-        //     this.$parent.getJson(`${API}/deleteFromBasket.json`)
-        //         .then(data => {
-        //             if(data.result === 1) {
-        //                 if(item.quantity>1){
-        //                     item.quantity--;
-        //                 } else {
-        //                     this.cartItems.splice(this.cartItems.indexOf(item), 1)
-        //                 }
-        //             }
-        //         })
-        // },
     },
     mounted(){
         this.$parent.getJson('/api/cart')
